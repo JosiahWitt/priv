@@ -225,6 +225,129 @@ var cases = []struct {
 		expected:         nil,
 		shouldPanicOrErr: true,
 	},
+	{
+		when:      "renaming and one field is included",
+		fieldList: []string{"Field1->MyOtherName"},
+		item:      testStruct1,
+		expected:  map[string]interface{}{"MyOtherName": testStruct1.Field1},
+	},
+	{
+		when:      "renaming to a nested name, and one field is included",
+		fieldList: []string{"Field1->My.Other.Name"},
+		item:      testStruct1,
+		expected: map[string]interface{}{
+			"My": map[string]interface{}{
+				"Other": map[string]interface{}{
+					"Name": testStruct1.Field1,
+				},
+			},
+		},
+	},
+	{
+		when:      "renaming and a complete doubly nested field is included",
+		fieldList: []string{"Field2->AnotherName"},
+		item:      testStruct1,
+		expected: map[string]interface{}{
+			"AnotherName": map[string]interface{}{
+				"Field1": testStruct1.Field2.Field1,
+				"Field2": map[string]interface{}{
+					"Field1": testStruct1.Field2.Field2.Field1,
+					"Field2": testStruct1.Field2.Field2.Field2,
+				},
+			},
+		},
+	},
+	{
+		when:      "renaming and a nested field is included",
+		fieldList: []string{"Field2.Field1->NestedName"},
+		item:      testStruct1,
+		expected: map[string]interface{}{
+			"NestedName": testStruct1.Field2.Field1,
+		},
+	},
+	{
+		when:      "renaming and a non-nested and a nested field is included",
+		fieldList: []string{"Field1->F1", "Field2.Field1->F2"},
+		item:      testStruct1,
+		expected: map[string]interface{}{
+			"F1": testStruct1.Field1,
+			"F2": testStruct1.Field2.Field1,
+		},
+	},
+	{
+		when:      "renaming and all of a doubly nested field is included",
+		fieldList: []string{"Field2.Field2->NestedName2"},
+		item:      testStruct1,
+		expected: map[string]interface{}{
+			"NestedName2": map[string]interface{}{
+				"Field1": testStruct1.Field2.Field2.Field1,
+				"Field2": testStruct1.Field2.Field2.Field2,
+			},
+		},
+	},
+	{
+		when:      "renaming to a nested name, and a nested field is included",
+		fieldList: []string{"Field2.Field1->Nested.Name"},
+		item:      testStruct1,
+		expected: map[string]interface{}{
+			"Nested": map[string]interface{}{
+				"Name": testStruct1.Field2.Field1,
+			},
+		},
+	},
+	{
+		when:      "renaming to a nested name, and all of a doubly nested field is included",
+		fieldList: []string{"Field2.Field2->Nested.Name2"},
+		item:      testStruct1,
+		expected: map[string]interface{}{
+			"Nested": map[string]interface{}{
+				"Name2": map[string]interface{}{
+					"Field1": testStruct1.Field2.Field2.Field1,
+					"Field2": testStruct1.Field2.Field2.Field2,
+				},
+			},
+		},
+	},
+	{
+		when:           "renaming, given a slice, and the first field is included with all of a doubly nested field is included",
+		fieldList:      []string{"Field2.Field2->MyField"},
+		item:           testStructSlice,
+		isArrayOrSlice: true,
+		expected: []map[string]interface{}{
+			{
+				"MyField": map[string]interface{}{
+					"Field1": testStruct1.Field2.Field2.Field1,
+					"Field2": testStruct1.Field2.Field2.Field2,
+				},
+			},
+			{
+				"MyField": map[string]interface{}{
+					"Field1": testStruct2.Field2.Field2.Field1,
+					"Field2": testStruct2.Field2.Field2.Field2,
+				},
+			},
+		},
+	},
+	{
+		when:           "renaming, given an array, and the first field is included with all of a doubly nested field is included",
+		fieldList:      []string{"Field2.Field2->MyField"},
+		item:           testStructArray,
+		isArrayOrSlice: true,
+		expected: []map[string]interface{}{
+			{
+				"MyField": map[string]interface{}{
+					"Field1": testStruct1.Field2.Field2.Field1,
+					"Field2": testStruct1.Field2.Field2.Field2,
+				},
+			},
+			{
+				"MyField": map[string]interface{}{
+					"Field1": testStruct2.Field2.Field2.Field1,
+					"Field2": testStruct2.Field2.Field2.Field2,
+				},
+			},
+		},
+	},
 }
 
 func TestToMap(t *testing.T) {

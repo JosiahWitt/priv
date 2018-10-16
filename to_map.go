@@ -9,15 +9,15 @@ import (
 
 // ToMap converts the item (struct or array of structs) to a map.
 // Only the fields in the fieldsToInclude list are included.
-// This list supports the dot operator to access nested fields.
+// This list supports the dot operator to access nested fields, as well as the -> operator to rename a nested field.
 // This function panics if the field cannot be found or set.
 // If you are calling this function with a dynamically built list of fieldsToInclude, you may want to use the priv.ToMapErr alternative.
 //
 // eg.
 //  users := [{ID: "123", Some: {Nested: {Field: "abc"}}, SomethingElse: true}]
-//  ToMap(users, "ID", "Some.Nested.Field")
+//  ToMap(users, "ID", "Some.Nested.Field->Renamed.Location")
 // would result in:
-//  [{ID: "123", Some: {Nested: {Field: "abc"}}]
+//  [{ID: "123", Renamed: {Location: "abc"}}]
 func ToMap(item interface{}, fieldsToInclude ...string) interface{} {
 	value, err := ToMapErr(item, fieldsToInclude...)
 	if err != nil {
@@ -54,6 +54,17 @@ func ToMapErr(item interface{}, fieldsToInclude ...string) (interface{}, error) 
 }
 
 func toMap(item reflect.Value, fieldsToInclude ...string) (interface{}, error) {
+	mappedFieldsToInclude := []mapField{}
+
+	// Convert the field strings to mapped fields
+	for _, field := range fieldsToInclude {
+		mappedFieldsToInclude = append(mappedFieldsToInclude, mapFieldFromFieldString(field))
+	}
+
+	return toMapV(item, mappedFieldsToInclude...)
+}
+
+func toMapV(item reflect.Value, mappedFieldsToInclude ...mapField) (interface{}, error) {
 	// Convert the struct to a map
 	sMap := structs.Map(item.Interface())
 
@@ -72,15 +83,15 @@ func toMap(item reflect.Value, fieldsToInclude ...string) (interface{}, error) {
 
 	// Build the result
 	result := make(map[string]interface{})
-	for _, field := range fieldsToInclude {
+	for _, field := range mappedFieldsToInclude {
 		// Grab the value
-		value, err := sMapAccessor.Get(sMap, field)
+		value, err := sMapAccessor.Get(sMap, field.FromLocation())
 		if err != nil {
 			return nil, err
 		}
 
 		// Set the value in the results
-		if err := resultAccessor.Set(result, field, value); err != nil {
+		if err := resultAccessor.Set(result, field.ToLocation(), value); err != nil {
 			return nil, err
 		}
 	}
