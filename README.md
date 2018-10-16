@@ -9,6 +9,10 @@
 
 **Under development; API may change.**
 
+> go get github.com/JosiahWitt/priv
+
+Tested with Go 1.9, 1.10, and 1.11.
+
 ## About
 
 Currently `priv` exports a simple API, which is composed of `priv.ToMap` and `priv.ToMapErr`. `priv.ToMap` panics if a field that does not exist is requested, whereas `priv.ToMapErr` returns an error. Most of the time panicing is not a big deal, since it would indicate a typo in the code.
